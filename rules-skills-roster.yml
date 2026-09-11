@@ -1,0 +1,50 @@
+# Manifest of standards the Reviewer (and, for lineage, the Developer) resolve
+# against — filtered by category and project tag, never globbed wholesale.
+#
+# This is the single highest-leverage file for keeping context small: agents
+# resolve a bounded lookup here instead of scanning a standards corpus that
+# can run to hundreds of thousands of tokens. See README.md § Guardrails,
+# "Context economy as a guardrail".
+
+version: 1
+
+categories:
+  - id: sql-style
+    description: SQL formatting, naming, and CTE conventions
+    applies_to: [dbt_only, mixed_upstream_dbt]
+    rules:
+      - name: naming-conventions
+        path: standards/sql-naming.md
+      - name: cte-structure
+        path: standards/sql-cte-style.md
+
+  - id: python-style
+    description: Python style for loader/job code
+    applies_to: [upstream_only, mixed_upstream_dbt]
+    rules:
+      - name: pep8-plus
+        path: standards/python-style.md
+      - name: error-handling
+        path: standards/python-error-handling.md
+
+  - id: pr-hygiene
+    description: PR size, commit message format, branch naming
+    applies_to: [dbt_only, mixed_upstream_dbt, upstream_only]
+    rules:
+      - name: commit-message-format
+        path: standards/commit-messages.md
+      - name: branch-naming
+        path: standards/branch-naming.md
+
+  - id: testing
+    description: Minimum test coverage expectations per change type
+    applies_to: [dbt_only, mixed_upstream_dbt, upstream_only]
+    rules:
+      - name: dbt-test-minimums
+        path: standards/dbt-test-minimums.md
+      - name: pytest-minimums
+        path: standards/pytest-minimums.md
+
+# Project tags let a playbook narrow the manifest further, e.g. a project
+# that has no Python jobs can skip the python-style category entirely.
+# See playbooks/_template.yml § standards_tags.

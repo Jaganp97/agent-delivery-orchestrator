@@ -1,0 +1,32 @@
+# Filled example, based on a dbt + Airflow + Glue data platform. Delete this
+# file once you've copied _template.yml for your own project — it's here to
+# show what a resolved playbook looks like, not to be used as-is.
+
+project:
+  name: "example-data-platform"
+  repo: "example-org/example-data-platform"
+  area_path: "ExampleProject\\DataPlatform"
+  default_base_branch: main
+  default_target_branch: develop
+
+reviewers_roster:
+  - "data-platform-lead"
+  - "senior-analytics-engineer"
+
+layers:
+  transform:
+    - "models/**"
+    - "macros/**/*.sql"
+  upstream:
+    - "dags/**"
+    - "glue_jobs/**"
+
+priority_queue:
+  - "EX-1042"   # example: a known-blocking ticket the team wants surfaced first
+  - "EX-1058"
+
+standards_tags:
+  - sql-style
+  - python-style
+  - pr-hygiene
+  - testing

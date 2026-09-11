@@ -1,0 +1,27 @@
+---
+description: Classifies changed/target file paths into a workflow path. Loaded by orchestrator-pipeline.mdc when a handoff's workflow_path is unset.
+alwaysApply: false
+---
+
+# Technology Router
+
+Classifies a ticket into exactly one workflow path based on which layer(s) it touches. This determines build-step ordering — see `README.md § Path selection` for the reasoning.
+
+## Classification table
+
+| Path | Condition | Build step | First human stop |
+|---|---|---|---|
+| `dbt_only` | Only transform-layer files (e.g. `models/**`, `.sql` under the transform project) — no upstream loader dependency | Before Tester | After tests pass |
+| `mixed_upstream_dbt` | Both transform-layer files **and** the loader/job files they depend on | After QA load | At first PR |
+| `upstream_only` | Only loader/job files (e.g. DAGs, ETL job scripts) — no transform-layer change | n/a | At first PR |
+
+## How to classify
+
+1. List the changed or target file paths from the ticket/plan.
+2. Match each against your project's layer boundaries, as defined in the resolved playbook (`playbooks/<project>.yml`, `layers:` section).
+3. If paths span both layers, and the transform-layer change reads from a table the loader change populates, classify as `mixed_upstream_dbt`. If the layers are touched but genuinely independent (no read dependency), treat them as two separate tickets instead of one mixed one — flag this to the user rather than guessing.
+4. Write the resolved path onto the handoff file's `workflow_path` field. This is set once per ticket and not re-evaluated unless the user explicitly asks to re-classify.
+
+## Notes
+
+This table is written for a dbt + Airflow/Glue-style split, but the underlying distinction — "does this change depend on infrastructure that must run first?" — generalizes to any transform/orchestration split (Databricks + Dagster, Snowflake tasks + Prefect, etc.). Adjust the path names and file-glob matching in your playbook; the three-way split and the gate placement are the reusable part.

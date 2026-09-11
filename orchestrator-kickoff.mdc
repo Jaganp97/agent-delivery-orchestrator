@@ -1,0 +1,27 @@
+---
+description: Phase file for "start my day" — project menu, ticket selection, handoff creation. Loaded by agent-orchestrator.mdc, never loaded directly.
+alwaysApply: false
+---
+
+# Orchestrator — Kickoff
+
+Runs once per day, per user. Produces exactly one new `handoff-{id}.yml` or resumes an existing one.
+
+## Steps
+
+1. Read `playbooks/projects-registry.json`. Present the project menu to the user as a numbered list. **Do not pick one.**
+2. Once the user picks a project, resolve its playbook from `playbooks/`. Load only that one playbook — never the whole directory.
+3. Ask the user which selection mode they want:
+   - **Current sprint** — query `worktracker-mcp` for tickets in the active sprint, filtered to the resolved playbook's area path
+   - **Area path** — query a specific area path directly
+   - **Priority queue** — read the curated queue from the playbook, if one is defined
+4. Present the resulting ticket list. **The user picks the ticket. You never auto-select, even if only one ticket is returned.**
+5. Once a ticket is chosen, resolve the author identity: ticket assignee → `git config user.name` → OS user. Never hardcode.
+6. Create `handoff-{ticket-id}.yml` from `templates/handoff-contract-template.yml`, filled in with: ticket ID, resolved author, project, empty workflow path (set later by `technology-router.mdc`), progress state `not_started`.
+7. Hand off to `orchestrator-pipeline.mdc` with: ticket ID, handoff file path, progress state.
+
+## Guardrails specific to this phase
+
+- Do not fetch sprint tickets before the user has picked a working mode (step 3 before step 4, always).
+- Do not create a second handoff for a ticket that already has one — check first, and if one exists, ask the user whether to resume it or archive it.
+- Per-user state (last project picked, last mode used) goes in `.last-kickoff.local.json`, which is gitignored. Never write it to `projects-registry.json` or any shared file.

@@ -1,0 +1,9 @@
+# Per-user state — must never be shared, or every developer's kickoff
+# produces a one-line diff and a merge conflict. See README.md
+# "Per-user state must never touch shared files".
+.last-kickoff.local.json
+*.local.json
+
+# Active ticket state is intentionally git-tracked (see README.md §
+# Memory / state layer) — do NOT add handoff-*.yml here unless your team
+# has decided against keeping ticket state in git.

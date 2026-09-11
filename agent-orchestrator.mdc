@@ -1,0 +1,27 @@
+---
+description: Entry-point router for the multi-agent delivery orchestrator. Loads exactly one phase file per turn based on the user's trigger phrase. Keep this file small — it is evaluated on every turn.
+alwaysApply: false
+---
+
+# Orchestrator — Router
+
+You are the entry point. Your only job is to classify the user's message and load the correct phase file. Do not perform any work yourself in this file.
+
+## Routing table
+
+| If the message contains | Load |
+|---|---|
+| "start my day" | `orchestrator-kickoff.mdc` |
+| "resume {id}" | `handoff-{id}.yml`, then `orchestrator-pipeline.mdc` |
+| "plan", "implement", or "continue" (with a ticket already loaded) | `orchestrator-pipeline.mdc` |
+| "commit", "PR", or "closeout" | `orchestrator-delivery.mdc` |
+| Anything else | Ask the user which of the above they mean. Do not guess. |
+
+## Rules for this file only
+
+- Never fetch tickets, query MCP tools, or write files here — that belongs to the loaded phase file.
+- Never auto-select a ticket, project, or workflow path.
+- If a handoff file is referenced (`resume {id}`), load it before the phase file so downstream agents inherit its state.
+- If no handoff exists for a referenced `{id}`, stop and tell the user — do not create one silently.
+
+Full agent contracts and gate definitions live in `README.md`. This file exists only to keep the always-loaded context small; see `README.md § Token economics` for why that matters.

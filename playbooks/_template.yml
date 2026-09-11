@@ -1,0 +1,39 @@
+# Seed file for a new project. Copy this to playbooks/<project-name>.yml
+# and fill in every field below. Do not leave placeholders in a committed
+# playbook — the Orchestrator will surface them at kickoff, but it's on you
+# to catch that before it does.
+
+project:
+  name: "<project-name>"                 # shown in the kickoff menu
+  repo: "<org>/<repo>"                   # git remote, org/repo form
+  area_path: "<worktracker area path>"   # used to filter sprint/backlog queries
+  default_base_branch: main
+  default_target_branch: develop
+
+# Reviewers who must be polled for approval before the Reviewer agent
+# will present the merge question. Real names/handles — do not commit
+# this with placeholder or example identities in a public repo.
+reviewers_roster:
+  - "<reviewer-handle-1>"
+  - "<reviewer-handle-2>"
+
+# File-glob boundaries used by technology-router.mdc to classify a ticket.
+layers:
+  transform:
+    - "models/**"
+    - "**/*.sql"
+  upstream:
+    - "dags/**"
+    - "jobs/**"
+    - "etl/**"
+
+# Optional curated queue, used when the user picks "priority queue" at
+# kickoff instead of current sprint or area path.
+priority_queue: []
+
+# Narrows rules-skills-roster.yml to only the categories relevant to this
+# project — e.g. drop "python-style" for a project with no loader code.
+standards_tags:
+  - sql-style
+  - pr-hygiene
+  - testing

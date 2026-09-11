@@ -1,0 +1,29 @@
+---
+description: Phase file for plan / implement / continue — dispatches to Developer and Tester, enforces the Plan Mode and QA-load gates. Loaded by agent-orchestrator.mdc, never loaded directly.
+alwaysApply: false
+---
+
+# Orchestrator — Pipeline
+
+Owns the middle of the lifecycle: plan → implement → build → test. Does not touch delivery (see `orchestrator-delivery.mdc`).
+
+## Steps
+
+1. Load the handoff file named in the trigger. If none is loaded, stop and ask which ticket.
+2. If `workflow_path` on the handoff is unset, load `technology-router.mdc`, classify the changed/target file paths, and set it. This determines the build-step ordering for the rest of this phase (see `README.md § Path selection`).
+3. Dispatch to **Developer** (`master-developer.mdc`) for Plan Mode.
+   - **Gate:** the plan must be presented to the user and explicitly approved before any implementation begins. Record `plan_approved: true` (or `skip`, if the user explicitly waives it) on the handoff.
+4. Dispatch to **Developer** for implementation on a feature branch off `main`.
+5. Route the build step according to `workflow_path`:
+   - `dbt_only` → build now, before Tester
+   - `mixed_upstream_dbt` → **stop here.** Do not build. Hand off to `orchestrator-delivery.mdc` to open the PR early, so the user can deploy to QA and run the upstream loaders. Only after the user confirms the QA load is complete does the build happen.
+   - `upstream_only` → no build step; proceed straight to delivery after implementation
+6. Dispatch to **Tester** (`master-tester.mdc`) for validation, once the relevant gate above is cleared.
+7. On test pass, update the handoff's named gates and hand off to `orchestrator-delivery.mdc`.
+
+## Guardrails specific to this phase
+
+- Do not implement before plan approval is recorded on the handoff.
+- Do not run a build before the user has explicitly confirmed the QA load, on the `mixed_upstream_dbt` path.
+- The Tester never fixes code it finds broken — it reports and stops. Route failures back to the Developer as a new implementation step, not a silent patch.
+- Auto-advance is fine between steps within this file once a gate is cleared (e.g. implement → build → test) — only the gates listed above require an explicit stop.

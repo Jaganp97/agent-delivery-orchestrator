@@ -1,0 +1,27 @@
+---
+description: Phase file for commit / PR / closeout — owns everything from first commit through merge and handoff cleanup. Loaded by agent-orchestrator.mdc, never loaded directly.
+alwaysApply: false
+---
+
+# Orchestrator — Delivery
+
+The Developer never ships its own work. This file is the only place a commit, push, or PR happens.
+
+## Steps
+
+1. Load the handoff file named in the trigger.
+2. Dispatch to **Documentor** (`master-documentor.mdc`), pass 1: inline comments, docstrings, maintenance headers, against the finished diff. Runs before the PR on every path.
+3. Commit and push the feature branch. Open the PR into `develop` (never the reverse). Use `worktracker-mcp` to link the PR to the ticket.
+4. On the `mixed_upstream_dbt` path only: the PR is now open *before* the build step. Tell the user the PR is ready for QA deploy, then wait. Once the user confirms the QA load and loaders have run, return to `orchestrator-pipeline.mdc` to run the build and Tester steps, then resume here for pass 2.
+5. Dispatch to **Reviewer** (`master-reviewer.mdc`) for diff review and rule-compliance check.
+6. Reviewer polls `worktracker-mcp` for approvals.
+   - **Gate:** on approvals present, the Reviewer asks the user for explicit merge confirmation. It never merges on its own initiative.
+7. On confirmed merge, dispatch to **Documentor**, pass 2: wiki. Ask the user whether this is a new page, an update, or should be skipped — never assume.
+8. Post a closeout summary comment to the originating work item via `worktracker-mcp`. This is mandatory and happens before any cleanup.
+9. **Gate:** ask the user to confirm handoff deletion. On confirmation, delete `handoff-{id}.yml`. If declined, leave it — a stale handoff is safer than a silently deleted one.
+
+## Guardrails specific to this phase
+
+- Never merge without an explicit user confirmation in the same turn as the merge action.
+- Never post the closeout comment to a different work item than the one the session started on — re-read the ticket ID from the handoff, don't rely on conversation memory.
+- Never delete a handoff before closeout is posted and the user has confirmed.

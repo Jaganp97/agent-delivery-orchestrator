@@ -1,0 +1,61 @@
+# Handoff contract — one per ticket, created at kickoff, deleted only after
+# closeout is posted and the user confirms cleanup. Never reused across
+# tickets; never pointed to by an "active handoff" pointer file — every
+# prompt in this system names its work item explicitly instead.
+#
+# Copy is created by orchestrator-kickoff.mdc as handoff-{ticket-id}.yml
+# at the repo root (or wherever your editor's working-state convention
+# expects it) and is git-diffable throughout the ticket's life.
+
+ticket_id: "<TICKET-ID>"
+project: "<project-name>"                 # matches a playbooks/*.yml name
+
+author:
+  resolved_from: "<ticket_assignee | git_config | os_user>"
+  identity: "<resolved-author-handle>"
+
+workflow_path: null                       # set once by technology-router.mdc: dbt_only | mixed_upstream_dbt | upstream_only
+progress_state: not_started               # not_started | planning | implementing | building | testing | delivering | reviewing | merged | closed
+
+plan_approved: null                       # true | skip | null (not yet reached)
+
+# Named gates, each with an owner and a pass/fail/pending state. The exact
+# set in play depends on workflow_path — see README.md § Human-in-the-loop
+# gates for the full table this mirrors.
+gates:
+  project_ticket_selection:
+    owner: user
+    state: pending
+  plan_approval:
+    owner: user
+    state: pending
+  qa_deploy_loader_run:
+    owner: user
+    state: pending
+  continue_after_qa_load:
+    owner: user
+    state: pending
+  continue_after_tests:
+    owner: user
+    state: pending
+  wiki_decision:
+    owner: user
+    state: pending
+  merge_confirmation:
+    owner: user
+    state: pending
+  handoff_deletion:
+    owner: user
+    state: pending
+
+changed_paths: []                         # populated by Developer during implementation
+models_touched: []                        # subset of changed_paths that are transform-layer
+
+pr:
+  number: null
+  url: null
+  opened_early: false                     # true on mixed_upstream_dbt — PR opened before build
+
+standards_loaded: []                      # rule names from rules-skills-roster.yml already resolved for this ticket, so Reviewer doesn't re-resolve every turn
+
+notes: ""                                 # free text — e.g. "documented pre-build; see QA load status" on mixed path
